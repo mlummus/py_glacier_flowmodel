@@ -5,10 +5,10 @@ import time
 import pandas as pd
 
 # define the spreadsheet that we will get data from later
-spreadsheet = pd.read('C:/Users/m337l400/Documents/GitHub/py_glacier_flowmodel/Specs_03473.xlsx')
+spreadsheet = pd.read_excel('C:/Users/m337l400/Documents/GitHub/py_glacier_flowmodel/Specs_03473.xlsx')
 
 # constants
-dt = 1 / 40000  # chosen to make it run a bit faster than one day at a time (originally: 1/200)
+dt = 1 / 500000  # chosen to make it run a bit faster than one day at a time (originally: 1/200)
 iterations = 100000  # number of iterations to run
 
 # # dx = 500.0  ### LETS DERIVE THIS INSTEAD OF DECLARING IT
@@ -18,7 +18,7 @@ iterations = 100000  # number of iterations to run
 
 # Lets make this to glacier 15.03473 specs
 L = 23.939  # Model length in kilometers
-gridpoints = 90  # Number of gridpoints we want to calculate (497 makes it about 50m, 90 makes it 266m spacing) 
+gridpoints = len(spreadsheet["Bed_elevation"])  # Number of gridpoints we want to calculate (497 makes it about 50m, 90 makes it 266m spacing) 
 dx = L / gridpoints * 1000  # distance between gridpoints in meters
 
 # Flow law stuff
@@ -94,9 +94,6 @@ def calculateThickness():
         current_ice_elevation = ice_elevation[i]
         current_bed_elevation = bed_elevation[i]
         current_width = width[i]
-        current_upstream_width = width[i-1]
-        current_downstream_width = width[i+1]
-        current_average_width = (current_upstream_width + current_downstream_width) / 2
 
         # get the upstream flux from our flux array
         #
@@ -110,10 +107,12 @@ def calculateThickness():
 
         # assume the first element case
         current_upstream_flux = 0
+        current_upstream_width = 0
 
         # if we're not at the first element than we can pick upstream flux
         if i > 0:
             current_upstream_flux = midpoint_flux[i - 1]
+            current_upstream_width = width[i-1]
 
         # for downstream, we need to make sure we're not at the last element
         # otherwise we set it to the same value as the upstream element so that
@@ -121,11 +120,17 @@ def calculateThickness():
         # and no ice ever gets to the end
         if i < gridpoints - 1:
             current_downstream_flux = midpoint_flux[i]
+            current_downstream_width = width[i+1]
         else:
             current_downstream_flux = current_upstream_flux
+            current_downstream_width = current_downstream_width
 
         # get our mass balance flux
         mass_balance_flux = getMassBalance(i)
+
+        # get average width
+        current_average_width = (current_upstream_width + current_downstream_width) / 2
+
 
         # calculate change in thickness, remember our fluxes are all negative
         # so we can add them together, but change the sign on the upstream on to make
