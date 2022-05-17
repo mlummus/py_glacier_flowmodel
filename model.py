@@ -8,8 +8,8 @@ import pandas as pd
 spreadsheet = pd.read_excel('C:/Users/m337l400/Documents/GitHub/py_glacier_flowmodel/Specs_03473.xlsx')
 
 # constants
-dt = 1 / 500000  # chosen to make it run a bit faster than one day at a time (originally: 1/200)
-iterations = 100000  # number of iterations to run
+dt = 1 / 5000000  # chosen to make it run a bit faster than one day at a time (originally: 1/200)
+iterations = 100000  # number of iterations to run 
 
 # # dx = 500.0  ### LETS DERIVE THIS INSTEAD OF DECLARING IT
 # L = 100.0  # Model length in kilometers
@@ -18,8 +18,8 @@ iterations = 100000  # number of iterations to run
 
 # Lets make this to glacier 15.03473 specs
 L = 23.939  # Model length in kilometers
-gridpoints = len(spreadsheet["Bed_elevation"])  # Number of gridpoints we want to calculate (497 makes it about 50m, 90 makes it 266m spacing) 
-dx = L / gridpoints * 1000  # distance between gridpoints in meters
+gridpoints = 90 # len(spreadsheet["Bed_elevation"]) #comes out to 501  # Number of gridpoints we want to calculate (497 makes it about 50m, 90 makes it 266m spacing) 
+dx = (L / gridpoints) * 1000  # distance between gridpoints in meters
 
 # Flow law stuff
 A = 3e-16  # could be as small as -24, Pa/
@@ -43,7 +43,7 @@ bed_elevation = spreadsheet['Bed_elevation'].tolist()
 midpoint_flux = [0] * (gridpoints - 1)
 
 # create a list of widths in meters along the glacier at the gridpoints
-width = spreadsheet['WIDTH_m']
+width = spreadsheet['WIDTH_m'] / 1000
 
 # surface mass balance
 # an equation for the surface that drops into the negatives
