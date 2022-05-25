@@ -8,8 +8,8 @@ import pandas as pd
 spreadsheet = pd.read_excel('C:/Users/m337l400/Documents/GitHub/py_glacier_flowmodel/Specs_03473.xlsx')
 
 # constants
-dt = 1 / 5000000  # chosen to make it run a bit faster than one day at a time (originally: 1/200)
-iterations = 100000  # number of iterations to run 
+dt = 1 / 5000000   # chosen to make it run a bit faster than one day at a time (originally: 1/200) 5000000
+iterations = 1000000000  # number of iterations to run 
 
 # # dx = 500.0  ### LETS DERIVE THIS INSTEAD OF DECLARING IT
 # L = 100.0  # Model length in kilometers
@@ -43,7 +43,7 @@ bed_elevation = spreadsheet['Bed_elevation'].tolist()
 midpoint_flux = [0] * (gridpoints - 1)
 
 # create a list of widths in meters along the glacier at the gridpoints
-width = spreadsheet['WIDTH_m'] / 1000
+width = (spreadsheet['WIDTH_m'] / 1000).tolist()
 
 # surface mass balance
 # an equation for the surface that drops into the negatives
@@ -93,7 +93,8 @@ def calculateThickness():
         # grab our current values based on this index
         current_ice_elevation = ice_elevation[i]
         current_bed_elevation = bed_elevation[i]
-        current_width = width[i]
+        current_upstream_width = width[i]
+        current_downstream_width = width[i + 1]
 
         # get the upstream flux from our flux array
         #
@@ -107,12 +108,10 @@ def calculateThickness():
 
         # assume the first element case
         current_upstream_flux = 0
-        current_upstream_width = 0
 
         # if we're not at the first element than we can pick upstream flux
         if i > 0:
             current_upstream_flux = midpoint_flux[i - 1]
-            current_upstream_width = width[i-1]
 
         # for downstream, we need to make sure we're not at the last element
         # otherwise we set it to the same value as the upstream element so that
@@ -120,16 +119,14 @@ def calculateThickness():
         # and no ice ever gets to the end
         if i < gridpoints - 1:
             current_downstream_flux = midpoint_flux[i]
-            current_downstream_width = width[i+1]
         else:
             current_downstream_flux = current_upstream_flux
-            current_downstream_width = current_downstream_width
 
         # get our mass balance flux
         mass_balance_flux = getMassBalance(i)
 
         # get average width
-        current_average_width = (current_upstream_width + current_downstream_width) / 2
+        current_average_width = 0.5 * (current_upstream_width + current_downstream_width)
 
 
         # calculate change in thickness, remember our fluxes are all negative
@@ -211,11 +208,10 @@ while t < iterations:
             "midpoints": formatOutputMidpoints(),
         }
         outtime = int(model_time)
-        outfilename = f"py-out/data-{outtime:04}.json"
+        outfilename = f"..\py-out/data-{outtime:04}.json"
         with open(outfilename, "w") as outfile:
             json.dump(data, outfile)
-
-        # print(t, model_time, ice_elevation[0], ice_elevation[100:105])
+        print(t, model_time, ice_elevation[0], ice_elevation[100:105])
 
 end = time.time()
 print(f"Completed {iterations} iterations in {(end-start)/60} minutes")
